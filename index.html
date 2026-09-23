@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Корректурная проба Бурдона</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #000000;
+    --line: #e0e0e0;
+    --letter: #000000;
+    --letter-crossed: #b0b0b0;
+    --btn-bg: #2b2b2b;
+    --btn-fg: #ffffff;
+  }
+  body.dark {
+    --bg: #2b2b2b;
+    --fg: #e8e8e8;
+    --line: #3d3d3d;
+    --letter: #e8e8e8;
+    --letter-crossed: #6a6a6a;
+    --btn-bg: #e8e8e8;
+    --btn-fg: #2b2b2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    transition: background 0.15s, color 0.15s;
+    min-height: 100vh;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  h1 { font-size: 24px; }
+  h2 { font-size: 20px; }
+  p, li { line-height: 1.6; font-size: 16px; }
+  .btn {
+    background: var(--btn-bg); color: var(--btn-fg);
+    border: none; padding: 14px 32px; font-size: 18px;
+    border-radius: 8px; cursor: pointer; margin-top: 20px;
+  }
+  .btn:hover { opacity: 0.85; }
+  .form-row { margin: 14px 0; font-size: 16px; }
+  .form-row label { display: block; margin-bottom: 6px; }
+  .form-row input, .form-row select {
+    padding: 10px; font-size: 16px;
+    border: 1px solid var(--line); border-radius: 6px;
+    background: var(--bg); color: var(--fg); width: 220px;
+  }
+  #timer { font-size: 18px; font-weight: bold; margin-bottom: 12px; }
+  #table {
+    font-family: 'Courier New', monospace;
+    font-size: 20px; line-height: 1.5; letter-spacing: 4px;
+    user-select: none; -webkit-user-select: none;
+  }
+  .row { white-space: nowrap; padding: 2px 0; }
+  .letter {
+    cursor: pointer; display: inline-block;
+    width: 18px; text-align: center; transition: color 0.1s;
+  }
+  .letter.crossed {
+    color: var(--letter-crossed);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+  }
+  #result { text-align: center; padding: 40px 20px; }
+  #result .percent { font-size: 48px; font-weight: bold; margin: 20px 0; }
+  .note { font-size: 14px; color: var(--letter-crossed); margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div id="screen-intro" class="screen active">
+    <h1>Здравствуйте!</h1>
+    <p>Ваше участие очень важно для нас. Тест занимает <b>10 минут</b>.</p>
+    <p><b>Инструкция:</b></p>
+    <ul>
+      <li>Перед вами будет таблица из заглавных русских букв.</li>
+      <li>Ваша задача — как можно быстрее просматривать таблицу слева направо и <b>нажимать на буквы К и С</b>.</li>
+      <li>Нажатая буква будет зачёркиваться. Отменить нельзя.</li>
+      <li>Нажимать можно на любую букву — все зачёркиваются, но нецелевые считаются ошибкой.</li>
+      <li><b>Через 5 минут тема резко сменится на тёмную, и таблица начнётся заново.</b></li>
+      <li>Работайте без остановок, не отвлекайтесь.</li>
+    </ul>
+    <p>Пожалуйста, заполните данные о себе:</p>
+    <div class="form-row">
+      <label>Пол:</label>
+      <select id="gender">
+        <option value="">— выберите —</option>
+        <option value="М">Мужской</option>
+        <option value="Ж">Женский</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Возраст:</label>
+      <input type="number" id="age" min="10" max="100" placeholder="например, 25">
+    </div>
+    <div class="form-row">
+      <label>Носите ли очки/линзы?</label>
+      <select id="glasses">
+        <option value="">— выберите —</option>
+        <option value="Да">Да</option>
+        <option value="Нет">Нет</option>
+      </select>
+    </div>
+    <button class="btn" id="startBtn">Начать тестирование</button>
+  </div>
+
+  <div id="screen-test" class="screen">
+    <div id="timer">Осталось: 10:00</div>
+    <div id="table"></div>
+  </div>
+
+  <div id="screen-result" class="screen">
+    <div id="result">
+      <h2>Спасибо за участие!</h2>
+      <p>Вы верно отметили:</p>
+      <div class="percent" id="percent">0%</div>
+      <p class="note">Ваши данные отправлены. Можете закрыть страницу.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============ НАСТРОЙКИ ============
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCwbm0OZ-VfRbWDuEr6IHR4W88V8SBegxDcts9yYT5Lm07KL9iLwZ_aM5bXokWjCUF/exec';
+
+const ROWS = 30;
+const COLS = 30;
+const TARGET_LETTERS = ['К', 'С'];
+const ALL_LETTERS = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
+const TEST_DURATION_SEC = 600;
+const THEME_SWITCH_SEC = 300;
+const MINUTE = 60;
+
+// ============ СОСТОЯНИЕ ============
+let state = {
+  userId: null,
+  startTime: null,
+  endTime: null,
+  gender: '', age: '', glasses: '',
+  theme: 'light',
+  clicks: 0,
+  errors: 0,
+  correct: 0,
+  totalTargets: 0,
+  correctLight: 0, totalTargetsLight: 0,
+  correctDark: 0,  totalTargetsDark: 0,
+  lastLine: 0,
+  lastLineClicks: 0,
+  timerId: null,
+  secondsLeft: TEST_DURATION_SEC,
+  frozen: false,
+  currentHalf: {
+    theme: 'light',
+    linesPerMin: [0, 0, 0, 0, 0],
+    errorsPerMin: [0, 0, 0, 0, 0],
+    charsPerMin: [0, 0, 0, 0, 0],
+    prevErrors: 0,
+    prevLineValue: 0
+  },
+  results: []
+};
+
+// ============ ИРКУТСКОЕ ВРЕМЯ ============
+function toIrkutsk(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const irk = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  const pad = n => n < 10 ? '0' + n : n;
+  return pad(irk.getUTCDate()) + '.' +
+         pad(irk.getUTCMonth() + 1) + '.' +
+         irk.getUTCFullYear() + ' ' +
+         pad(irk.getUTCHours()) + ':' +
+         pad(irk.getUTCMinutes()) + ':' +
+         pad(irk.getUTCSeconds());
+}
+
+// ============ ГЕНЕРАЦИЯ ТАБЛИЦЫ ============
+function generateTable() {
+  const table = document.getElementById('table');
+  table.innerHTML = '';
+  state.totalTargets = 0;
+
+  for (let r = 0; r < ROWS; r++) {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'row';
+    rowDiv.dataset.line = r + 1;
+
+    for (let c = 0; c < COLS; c++) {
+      let letter;
+      if (Math.random() < 0.15) {
+        letter = TARGET_LETTERS[Math.floor(Math.random() * TARGET_LETTERS.length)];
+        state.totalTargets++;
+        if (state.theme === 'light') state.totalTargetsLight++;
+        else state.totalTargetsDark++;
+      } else {
+        letter = ALL_LETTERS[Math.floor(Math.random() * ALL_LETTERS.length)];
+      }
+
+      const span = document.createElement('span');
+      span.className = 'letter';
+      span.textContent = letter;
+      span.dataset.isTarget = TARGET_LETTERS.includes(letter) ? '1' : '0';
+      span.dataset.line = r + 1;
+      span.addEventListener('click', onLetterClick);
+      rowDiv.appendChild(span);
+    }
+    table.appendChild(rowDiv);
+  }
+}
+
+// ============ ОБРАБОТКА КЛИКА ============
+function onLetterClick(e) {
+  if (state.frozen) return;
+  const span = e.currentTarget;
+  if (span.classList.contains('crossed')) return;
+
+  span.classList.add('crossed');
+  state.clicks++;
+
+  const isTarget = span.dataset.isTarget === '1';
+  if (isTarget) {
+    state.correct++;
+    if (state.theme === 'light') state.correctLight++;
+    else state.correctDark++;
+  } else {
+    state.errors++;
+  }
+
+  const line = parseInt(span.dataset.line);
+  if (line > state.lastLine) {
+    state.lastLine = line;
+    state.lastLineClicks = 1;
+  } else if (line === state.lastLine) {
+    state.lastLineClicks++;
+  } else {
+    state.lastLineClicks++;
+  }
+}
+
+// ============ ТЕКУЩАЯ ЛИНЕЙНАЯ ПОЗИЦИЯ ============
+function currentLineValue() {
+  if (state.lastLine === 0) return 0;
+  if (state.lastLine === 1) return state.lastLineClicks / COLS;
+  return (state.lastLine - 1) + (state.lastLineClicks / COLS);
+}
+
+// ============ ТАЙМЕР ============
+function startTimer() {
+  state.secondsLeft = TEST_DURATION_SEC;
+  updateTimerDisplay();
+
+  state.timerId = setInterval(() => {
+    state.secondsLeft--;
+    updateTimerDisplay();
+    const elapsed = TEST_DURATION_SEC - state.secondsLeft;
+    if (elapsed > 0 && elapsed % MINUTE === 0) recordMinute(elapsed / MINUTE);
+    if (elapsed === THEME_SWITCH_SEC) switchTheme();
+    if (elapsed >= TEST_DURATION_SEC) finishTest();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(state.secondsLeft / 60);
+  const s = state.secondsLeft % 60;
+  document.getElementById('timer').textContent =
+    'Осталось: ' + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+// ============ ЗАПИСЬ МИНУТЫ ============
+function recordMinute(minuteNum) {
+  const half = state.currentHalf;
+  const lineValue = currentLineValue();
+  const idx = minuteNum <= 5 ? minuteNum - 1 : minuteNum - 6;
+  const charsThisMinute = Math.round((lineValue - half.prevLineValue) * COLS);
+  const errorsThisMinute = state.errors - half.prevErrors;
+
+  half.linesPerMin[idx] = parseFloat(lineValue.toFixed(2));
+  half.charsPerMin[idx] = charsThisMinute > 0 ? charsThisMinute : 0;
+  half.errorsPerMin[idx] = errorsThisMinute > 0 ? errorsThisMinute : 0;
+
+  half.prevLineValue = lineValue;
+  half.prevErrors = state.errors;
+}
+
+// ============ СМЕНА ТЕМЫ ============
+function switchTheme() {
+  state.results.push({
+    theme: state.currentHalf.theme,
+    lines: state.currentHalf.linesPerMin.slice(),
+    errors: state.currentHalf.errorsPerMin.slice(),
+    chars: state.currentHalf.charsPerMin.slice()
+  });
+
+  state.currentHalf = {
+    theme: 'dark',
+    linesPerMin: [0, 0, 0, 0, 0],
+    errorsPerMin: [0, 0, 0, 0, 0],
+    charsPerMin: [0, 0, 0, 0, 0],
+    prevErrors: state.errors,
+    prevLineValue: 0
+  };
+
+  state.frozen = true;
+  document.body.classList.add('dark');
+  state.theme = 'dark';
+
+  setTimeout(() => {
+    generateTable();
+    state.lastLine = 0;
+    state.lastLineClicks = 0;
+    state.frozen = false;
+  }, 50);
+}
+
+// ============ ЗАВЕРШЕНИЕ ============
+function finishTest() {
+  clearInterval(state.timerId);
+  state.frozen = true;
+  state.endTime = new Date().toISOString();
+
+  recordMinute(10);
+
+  state.results.push({
+    theme: state.currentHalf.theme,
+    lines: state.currentHalf.linesPerMin.slice(),
+    errors: state.currentHalf.errorsPerMin.slice(),
+    chars: state.currentHalf.charsPerMin.slice()
+  });
+
+  const p1 = state.totalTargetsLight > 0
+    ? state.correctLight / state.totalTargetsLight * 100 : 0;
+  const p2 = state.totalTargetsDark > 0
+    ? state.correctDark / state.totalTargetsDark * 100 : 0;
+  const avg = Math.round((p1 + p2) / 2);
+  document.getElementById('percent').textContent = (isFinite(avg) ? avg : 0) + '%';
+
+  sendData();
+
+  document.getElementById('screen-test').classList.remove('active');
+  document.getElementById('screen-result').classList.add('active');
+}
+
+// ============ ОТПРАВКА ============
+function sendData() {
+  const base = {
+    userId: state.userId,
+    startTime: toIrkutsk(state.startTime),
+    endTime: toIrkutsk(state.endTime),
+    gender: state.gender,
+    age: state.age,
+    glasses: state.glasses
+  };
+  state.results.forEach(r => {
+    const payload = Object.assign({}, base, { result: r });
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify(payload)
+    }).catch(err => console.error('Ошибка отправки:', err));
+  });
+}
+
+// ============ СТАРТ ============
+document.getElementById('startBtn').addEventListener('click', () => {
+  const gender = document.getElementById('gender').value;
+  const age = document.getElementById('age').value;
+  const glasses = document.getElementById('glasses').value;
+  if (!gender || !age || !glasses) {
+    alert('Пожалуйста, заполните все поля.');
+    return;
+  }
+  state.userId = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  state.startTime = new Date().toISOString();
+  state.gender = gender;
+  state.age = age;
+  state.glasses = glasses;
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-test').classList.add('active');
+  generateTable();
+  startTimer();
+});
+</script>
+</body>
+</html>
