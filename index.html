@@ -11,8 +11,11 @@
     --line: #e0e0e0;
     --letter: #000000;
     --letter-crossed: #b0b0b0;
+    --letter-blocked: #d8d8d8;
     --btn-bg: #2b2b2b;
     --btn-fg: #ffffff;
+    --accent: #4a7cff;
+    --accent-soft: #eef3ff;
   }
   body.dark {
     --bg: #2b2b2b;
@@ -20,8 +23,11 @@
     --line: #3d3d3d;
     --letter: #e8e8e8;
     --letter-crossed: #6a6a6a;
+    --letter-blocked: #3a3a3a;
     --btn-bg: #e8e8e8;
     --btn-fg: #2b2b2b;
+    --accent: #7ba0ff;
+    --accent-soft: #38415a;
   }
   * { box-sizing: border-box; }
   body {
@@ -32,90 +38,302 @@
     transition: background 0.15s, color 0.15s;
     min-height: 100vh;
   }
-  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; }
+
   .screen { display: none; }
   .screen.active { display: block; }
-  h1 { font-size: 24px; }
-  h2 { font-size: 20px; }
-  p, li { line-height: 1.6; font-size: 16px; }
+
+  .hero {
+    text-align: center;
+    padding: 20px 0 10px;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: 28px;
+    margin: 0 0 12px;
+    line-height: 1.25;
+  }
+  .hero p {
+    color: var(--letter-crossed);
+    font-size: 16px;
+    max-width: 620px;
+    margin: 0 auto 10px;
+    line-height: 1.6;
+  }
+  .hero .greeting {
+    font-size: 16px;
+    color: var(--fg);
+    line-height: 1.7;
+    max-width: 640px;
+    margin: 0 auto 16px;
+    text-align: left;
+  }
+  .hero .greeting p { text-align: left; max-width: none; }
+
+  .card {
+    background: var(--accent-soft);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin: 22px 0;
+  }
+  .card h3 {
+    margin: 0 0 12px;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card ul { margin: 8px 0 0; padding-left: 20px; }
+  .card li { margin: 6px 0; line-height: 1.55; font-size: 15px; }
+
+  .warn {
+    background: #fff6e0;
+    color: #6a4a00;
+    border-left: 4px solid #f0b400;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 18px 0;
+  }
+  body.dark .warn {
+    background: #4a3f1e;
+    color: #f4d78a;
+    border-left-color: #f0b400;
+  }
+
+  .orientation-tip {
+    text-align: center;
+    font-size: 14px;
+    color: var(--letter-crossed);
+    margin-top: 14px;
+    padding: 10px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+  .orientation-tip strong { color: var(--fg); }
+
+  .form-section {
+    margin-top: 28px;
+  }
+  .form-section h3 {
+    font-size: 17px;
+    margin: 0 0 14px;
+  }
+
+  .form-row { margin: 14px 0; font-size: 15px; }
+  .form-row label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-row input, .form-row select {
+    padding: 11px 12px;
+    font-size: 15px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--fg);
+    width: 100%;
+    max-width: 420px;
+    font-family: inherit;
+  }
+  .form-row .hint {
+    font-size: 13px;
+    color: var(--letter-crossed);
+    margin-top: 6px;
+    line-height: 1.55;
+  }
+
   .btn {
-    background: var(--btn-bg); color: var(--btn-fg);
-    border: none; padding: 14px 32px; font-size: 18px;
-    border-radius: 8px; cursor: pointer; margin-top: 20px;
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    border: none;
+    padding: 15px 34px;
+    font-size: 17px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 24px;
+    transition: opacity 0.15s;
+    width: 100%;
+    max-width: 420px;
   }
   .btn:hover { opacity: 0.85; }
-  .form-row { margin: 14px 0; font-size: 16px; }
-  .form-row label { display: block; margin-bottom: 6px; }
-  .form-row input, .form-row select {
-    padding: 10px; font-size: 16px;
-    border: 1px solid var(--line); border-radius: 6px;
-    background: var(--bg); color: var(--fg); width: 220px;
+  .btn-center { display: flex; justify-content: center; }
+
+  #timer {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    padding: 8px 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 8px;
+    display: inline-block;
   }
-  #timer { font-size: 18px; font-weight: bold; margin-bottom: 12px; }
   #table {
     font-family: 'Courier New', monospace;
-    font-size: 20px; line-height: 1.5; letter-spacing: 4px;
-    user-select: none; -webkit-user-select: none;
+    font-size: 20px;
+    line-height: 1.5;
+    letter-spacing: 4px;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    margin-top: 6px;
   }
   .row { white-space: nowrap; padding: 2px 0; }
   .letter {
-    cursor: pointer; display: inline-block;
-    width: 18px; text-align: center; transition: color 0.1s;
+    cursor: pointer;
+    display: inline-block;
+    width: 18px;
+    text-align: center;
+    transition: color 0.1s;
   }
   .letter.crossed {
     color: var(--letter-crossed);
     text-decoration: line-through;
     text-decoration-thickness: 2px;
   }
-  #result { text-align: center; padding: 40px 20px; }
-  #result .percent { font-size: 48px; font-weight: bold; margin: 20px 0; }
-  .note { font-size: 14px; color: var(--letter-crossed); margin-top: 20px; }
+  .letter.blocked {
+    color: var(--letter-blocked);
+    cursor: not-allowed;
+  }
+
+  #result { text-align: center; padding: 50px 20px; }
+  #result .percent {
+    font-size: 52px;
+    font-weight: 700;
+    margin: 20px 0;
+    color: var(--accent);
+  }
+  #result h2 { font-size: 24px; margin-bottom: 10px; }
+  .note { font-size: 14px; color: var(--letter-crossed); margin-top: 24px; }
+
+  @media (max-width: 500px) {
+    .hero h1 { font-size: 23px; }
+    .card { padding: 16px 18px; }
+    #table { font-size: 16px; letter-spacing: 3px; }
+    .letter { width: 15px; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
 
+  <!-- ЭКРАН 1: Приветствие -->
   <div id="screen-intro" class="screen active">
-    <h1>Здравствуйте!</h1>
-    <p>Ваше участие очень важно для нас. Тест занимает <b>10 минут</b>.</p>
-    <p><b>Инструкция:</b></p>
-    <ul>
-      <li>Перед вами будет таблица из заглавных русских букв.</li>
-      <li>Ваша задача — как можно быстрее просматривать таблицу слева направо и <b>нажимать на буквы К и С</b>.</li>
-      <li>Нажатая буква будет зачёркиваться. Отменить нельзя.</li>
-      <li>Нажимать можно на любую букву — все зачёркиваются, но нецелевые считаются ошибкой.</li>
-      <li><b>Через 5 минут тема резко сменится на тёмную, и таблица начнётся заново.</b></li>
-      <li>Работайте без остановок, не отвлекайтесь.</li>
-    </ul>
-    <p>Пожалуйста, заполните данные о себе:</p>
-    <div class="form-row">
-      <label>Пол:</label>
-      <select id="gender">
-        <option value="">— выберите —</option>
-        <option value="М">Мужской</option>
-        <option value="Ж">Женский</option>
-      </select>
+    <div class="hero">
+      <div class="hero-badge">ИССЛЕДОВАНИЕ ВНИМАНИЯ</div>
+      <h1>Корректурная проба Бурдона</h1>
     </div>
-    <div class="form-row">
-      <label>Возраст:</label>
-      <input type="number" id="age" min="10" max="100" placeholder="например, 25">
+
+    <div class="hero greeting">
+      <p><strong>Здравствуйте и спасибо, что решили принять участие!</strong></p>
+      <p>Прямо сейчас вы помогаете исследованию, которое изучает, как светлая и тёмная тема экрана влияет на нашу способность концентрировать внимание. Это важно: большинство из нас ежедневно проводит часы за телефоном, и понимание того, как оформление интерфейса сказывается на утомлении глаз и внимании, помогает делать цифровые продукты удобнее и безопаснее.</p>
+      <p>Тест, который вы сейчас пройдёте, — это классическая методика «корректурная проба Бурдона», известная психологам уже более ста лет. Она простая, но очень чувствительная к состоянию внимания. От вас потребуется всего лишь 10 минут сосредоточенной работы. Постарайтесь пройти тест в спокойной обстановке, без отвлечений — так ваши данные будут точнее и полезнее для исследования.</p>
+      <p>Ваше участие анонимно и добровольно. Собранные результаты используются только в обобщённом виде для научной работы.</p>
     </div>
-    <div class="form-row">
-      <label>Носите ли очки/линзы?</label>
-      <select id="glasses">
-        <option value="">— выберите —</option>
-        <option value="Да">Да</option>
-        <option value="Нет">Нет</option>
-      </select>
+
+    <div class="card">
+      <h3>📋 Что вас ждёт</h3>
+      <ul>
+        <li>На экране появится таблица из заглавных русских букв.</li>
+        <li>Ваша задача — как можно быстрее просматривать её <strong>слева направо, сверху вниз</strong> и нажимать на буквы <strong>К</strong> и <strong>С</strong>.</li>
+        <li>Нажатая буква зачёркивается. <strong>Отменить действие нельзя.</strong></li>
+        <li>Нажимать можно и на другие буквы — они тоже зачёркиваются, но засчитываются как ошибка.</li>
+        <li><strong>Через 5 минут тема резко сменится на тёмную, и таблица начнётся заново.</strong> Это часть исследования.</li>
+        <li>Работайте без остановок и не отвлекайтесь на посторонние дела.</li>
+      </ul>
     </div>
-    <button class="btn" id="startBtn">Начать тестирование</button>
+
+    <div class="warn">
+      ⚠️ <strong>Важно:</strong> двигайтесь по таблице <strong>только слева направо и сверху вниз</strong>. К уже пройденным буквам возвращаться нельзя — они будут заблокированы. Это принципиальное условие методики.
+    </div>
+
+    <div class="orientation-tip">
+      📱 <strong>Совет:</strong> если проходите тест с телефона, поверните его <strong>горизонтально</strong> — так таблица поместится удобнее.
+    </div>
+
+    <div class="form-section">
+      <h3>Расскажите немного о себе</h3>
+
+      <div class="form-row">
+        <label>Ник (придумайте любое имя)</label>
+        <input type="text" id="nick" maxlength="30" placeholder="например, iris_92">
+        <div class="hint">
+          ⚠️ <strong>Ник должен содержать хотя бы одну цифру</strong> — например, <em>anna_7</em> или <em>k1r</em>.<br>
+          Если будете проходить тест ещё раз, используйте <strong>тот же ник</strong> — это нужно, чтобы мы могли связать ваши результаты.
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Пол</label>
+        <select id="gender">
+          <option value="">— выберите —</option>
+          <option value="М">Мужской</option>
+          <option value="Ж">Женский</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Возраст</label>
+        <input type="number" id="age" min="10" max="100" placeholder="например, 25">
+      </div>
+
+      <div class="form-row">
+        <label>Носите ли очки или линзы?</label>
+        <select id="glasses">
+          <option value="">— выберите —</option>
+          <option value="Да">Да</option>
+          <option value="Нет">Нет</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Есть ли у вас одно из заболеваний?</label>
+        <select id="eyeDisease">
+          <option value="">— выберите —</option>
+          <option value="Близорукость">Близорукость</option>
+          <option value="Дальнозоркость">Дальнозоркость</option>
+          <option value="Астигматизм">Астигматизм</option>
+          <option value="Нет заболеваний">Нет заболеваний</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Делаете ли вы перерывы для разминки глаз во время длительной работы за экраном?</label>
+        <select id="eyeBreaks">
+          <option value="">— выберите —</option>
+          <option value="Да, регулярно">Да, регулярно</option>
+          <option value="Иногда">Иногда</option>
+          <option value="Нет, никогда">Нет, никогда</option>
+        </select>
+      </div>
+
+      <div class="btn-center">
+        <button class="btn" id="startBtn">Начать тестирование</button>
+      </div>
+    </div>
   </div>
 
+  <!-- ЭКРАН 2: Тест -->
   <div id="screen-test" class="screen">
     <div id="timer">Осталось: 10:00</div>
     <div id="table"></div>
   </div>
 
+  <!-- ЭКРАН 3: Результат -->
   <div id="screen-result" class="screen">
     <div id="result">
       <h2>Спасибо за участие!</h2>
@@ -129,7 +347,7 @@
 
 <script>
 // ============ НАСТРОЙКИ ============
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzCwbm0OZ-VfRbWDuEr6IHR4W88V8SBegxDcts9yYT5Lm07KL9iLwZ_aM5bXokWjCUF/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyku2t-8Z8ZAEyfmnrI0RpTKtMkRIF3XToApIYFavv-eBUvSg6CKZnVI4jxNqq8U3-Q/exec';
 
 const ROWS = 30;
 const COLS = 30;
@@ -142,9 +360,10 @@ const MINUTE = 60;
 // ============ СОСТОЯНИЕ ============
 let state = {
   userId: null,
+  nick: '',
   startTime: null,
   endTime: null,
-  gender: '', age: '', glasses: '',
+  gender: '', age: '', glasses: '', eyeDisease: '', eyeBreaks: '',
   theme: 'light',
   clicks: 0,
   errors: 0,
@@ -209,10 +428,27 @@ function generateTable() {
       span.textContent = letter;
       span.dataset.isTarget = TARGET_LETTERS.includes(letter) ? '1' : '0';
       span.dataset.line = r + 1;
+      span.dataset.col = c;
       span.addEventListener('click', onLetterClick);
       rowDiv.appendChild(span);
     }
     table.appendChild(rowDiv);
+  }
+}
+
+// ============ БЛОКИРОВКА ПРОЙДЕННЫХ БУКВ ============
+function blockPassedLetters(line, col) {
+  const rows = document.querySelectorAll('#table .row');
+  for (let r = 0; r < rows.length; r++) {
+    const rowLine = r + 1;
+    const letters = rows[r].querySelectorAll('.letter');
+    for (let c = 0; c < letters.length; c++) {
+      const l = letters[c];
+      if (l.classList.contains('crossed') || l.classList.contains('blocked')) continue;
+      if (rowLine < line || (rowLine === line && c < col)) {
+        l.classList.add('blocked');
+      }
+    }
   }
 }
 
@@ -221,6 +457,10 @@ function onLetterClick(e) {
   if (state.frozen) return;
   const span = e.currentTarget;
   if (span.classList.contains('crossed')) return;
+  if (span.classList.contains('blocked')) return;
+
+  const line = parseInt(span.dataset.line);
+  const col = parseInt(span.dataset.col);
 
   span.classList.add('crossed');
   state.clicks++;
@@ -234,7 +474,6 @@ function onLetterClick(e) {
     state.errors++;
   }
 
-  const line = parseInt(span.dataset.line);
   if (line > state.lastLine) {
     state.lastLine = line;
     state.lastLineClicks = 1;
@@ -243,6 +482,8 @@ function onLetterClick(e) {
   } else {
     state.lastLineClicks++;
   }
+
+  blockPassedLetters(line, col);
 }
 
 // ============ ТЕКУЩАЯ ЛИНЕЙНАЯ ПОЗИЦИЯ ============
@@ -352,11 +593,14 @@ function finishTest() {
 function sendData() {
   const base = {
     userId: state.userId,
+    nick: state.nick,
     startTime: toIrkutsk(state.startTime),
     endTime: toIrkutsk(state.endTime),
     gender: state.gender,
     age: state.age,
-    glasses: state.glasses
+    glasses: state.glasses,
+    eyeDisease: state.eyeDisease,
+    eyeBreaks: state.eyeBreaks
   };
   state.results.forEach(r => {
     const payload = Object.assign({}, base, { result: r });
@@ -371,20 +615,37 @@ function sendData() {
 
 // ============ СТАРТ ============
 document.getElementById('startBtn').addEventListener('click', () => {
+  const nick = document.getElementById('nick').value.trim();
   const gender = document.getElementById('gender').value;
   const age = document.getElementById('age').value;
   const glasses = document.getElementById('glasses').value;
-  if (!gender || !age || !glasses) {
+  const eyeDisease = document.getElementById('eyeDisease').value;
+  const eyeBreaks = document.getElementById('eyeBreaks').value;
+
+  if (!nick || !gender || !age || !glasses || !eyeDisease || !eyeBreaks) {
     alert('Пожалуйста, заполните все поля.');
     return;
   }
+
+  // Проверка ника: минимум одна цифра
+  if (!/\d/.test(nick)) {
+    alert('Ник должен содержать хотя бы одну цифру. Например: anna_7, user42, k1r.');
+    document.getElementById('nick').focus();
+    return;
+  }
+
   state.userId = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  state.nick = nick;
   state.startTime = new Date().toISOString();
   state.gender = gender;
   state.age = age;
   state.glasses = glasses;
+  state.eyeDisease = eyeDisease;
+  state.eyeBreaks = eyeBreaks;
+
   document.getElementById('screen-intro').classList.remove('active');
   document.getElementById('screen-test').classList.add('active');
+
   generateTable();
   startTimer();
 });
