@@ -43,10 +43,7 @@
   .screen { display: none; }
   .screen.active { display: block; }
 
-  .hero {
-    text-align: center;
-    padding: 20px 0 10px;
-  }
+  .hero { text-align: center; padding: 20px 0 10px; }
   .hero-badge {
     display: inline-block;
     background: var(--accent-soft);
@@ -58,11 +55,7 @@
     letter-spacing: 0.4px;
     margin-bottom: 18px;
   }
-  .hero h1 {
-    font-size: 28px;
-    margin: 0 0 12px;
-    line-height: 1.25;
-  }
+  .hero h1 { font-size: 28px; margin: 0 0 12px; line-height: 1.25; }
   .hero p {
     color: var(--letter-crossed);
     font-size: 16px;
@@ -86,13 +79,7 @@
     padding: 20px 22px;
     margin: 22px 0;
   }
-  .card h3 {
-    margin: 0 0 12px;
-    font-size: 17px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .card h3 { margin: 0 0 12px; font-size: 17px; display: flex; align-items: center; gap: 8px; }
   .card ul { margin: 8px 0 0; padding-left: 20px; }
   .card li { margin: 6px 0; line-height: 1.55; font-size: 15px; }
 
@@ -123,20 +110,11 @@
   }
   .orientation-tip strong { color: var(--fg); }
 
-  .form-section {
-    margin-top: 28px;
-  }
-  .form-section h3 {
-    font-size: 17px;
-    margin: 0 0 14px;
-  }
+  .form-section { margin-top: 28px; }
+  .form-section h3 { font-size: 17px; margin: 0 0 14px; }
 
   .form-row { margin: 14px 0; font-size: 15px; }
-  .form-row label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
+  .form-row label { display: block; margin-bottom: 6px; font-weight: 500; }
   .form-row input, .form-row select {
     padding: 11px 12px;
     font-size: 15px;
@@ -205,18 +183,10 @@
     text-decoration: line-through;
     text-decoration-thickness: 2px;
   }
-  .letter.blocked {
-    color: var(--letter-blocked);
-    cursor: not-allowed;
-  }
+  .letter.blocked { color: var(--letter-blocked); cursor: not-allowed; }
 
   #result { text-align: center; padding: 50px 20px; }
-  #result .percent {
-    font-size: 52px;
-    font-weight: 700;
-    margin: 20px 0;
-    color: var(--accent);
-  }
+  #result .percent { font-size: 52px; font-weight: 700; margin: 20px 0; color: var(--accent); }
   #result h2 { font-size: 24px; margin-bottom: 10px; }
   .note { font-size: 14px; color: var(--letter-crossed); margin-top: 24px; }
 
@@ -369,8 +339,12 @@ let state = {
   errors: 0,
   correct: 0,
   totalTargets: 0,
+  // Раздельные счётчики по темам — без накопления между половинами
   correctLight: 0, totalTargetsLight: 0,
   correctDark: 0,  totalTargetsDark: 0,
+  // Глобальная максимальная позиция
+  maxLine: 0, maxCol: 0,
+  // Позиция для "записи минуты" (последний клик)
   lastLine: 0,
   lastLineClicks: 0,
   timerId: null,
@@ -407,6 +381,15 @@ function generateTable() {
   table.innerHTML = '';
   state.totalTargets = 0;
 
+  // Сбрасываем счётчики целевых букв ДЛЯ ТЕКУЩЕЙ ТЕМЫ.
+  // Это гарантирует, что totalTargetsLight/Dark соответствуют
+  // реально сгенерированной таблице.
+  if (state.theme === 'light') {
+    state.totalTargetsLight = 0;
+  } else {
+    state.totalTargetsDark = 0;
+  }
+
   for (let r = 0; r < ROWS; r++) {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'row';
@@ -437,7 +420,10 @@ function generateTable() {
 }
 
 // ============ БЛОКИРОВКА ПРОЙДЕННЫХ БУКВ ============
-function blockPassedLetters(line, col) {
+// Блокируем всё в строках выше maxLine + в maxLine колонки левее maxCol.
+function blockPassedLetters() {
+  const maxLine = state.maxLine;
+  const maxCol = state.maxCol;
   const rows = document.querySelectorAll('#table .row');
   for (let r = 0; r < rows.length; r++) {
     const rowLine = r + 1;
@@ -445,7 +431,9 @@ function blockPassedLetters(line, col) {
     for (let c = 0; c < letters.length; c++) {
       const l = letters[c];
       if (l.classList.contains('crossed') || l.classList.contains('blocked')) continue;
-      if (rowLine < line || (rowLine === line && c < col)) {
+      if (rowLine < maxLine) {
+        l.classList.add('blocked');
+      } else if (rowLine === maxLine && c < maxCol) {
         l.classList.add('blocked');
       }
     }
@@ -462,6 +450,10 @@ function onLetterClick(e) {
   const line = parseInt(span.dataset.line);
   const col = parseInt(span.dataset.col);
 
+  // Жёсткая проверка: не назад, не в пройденные области
+  if (line < state.maxLine) return;
+  if (line === state.maxLine && col < state.maxCol) return;
+
   span.classList.add('crossed');
   state.clicks++;
 
@@ -474,23 +466,25 @@ function onLetterClick(e) {
     state.errors++;
   }
 
-  if (line > state.lastLine) {
-    state.lastLine = line;
-    state.lastLineClicks = 1;
-  } else if (line === state.lastLine) {
-    state.lastLineClicks++;
-  } else {
-    state.lastLineClicks++;
+  // Обновляем глобальный максимум
+  if (line > state.maxLine) {
+    state.maxLine = line;
+    state.maxCol = col;
+  } else if (line === state.maxLine && col > state.maxCol) {
+    state.maxCol = col;
   }
 
-  blockPassedLetters(line, col);
+  // Для записи минуты используем текущую позицию
+  state.lastLine = line;
+  state.lastLineClicks = col + 1;
+
+  blockPassedLetters();
 }
 
 // ============ ТЕКУЩАЯ ЛИНЕЙНАЯ ПОЗИЦИЯ ============
 function currentLineValue() {
-  if (state.lastLine === 0) return 0;
-  if (state.lastLine === 1) return state.lastLineClicks / COLS;
-  return (state.lastLine - 1) + (state.lastLineClicks / COLS);
+  if (state.maxLine === 0) return 0;
+  return (state.maxLine - 1) + ((state.maxCol + 1) / COLS);
 }
 
 // ============ ТАЙМЕР ============
@@ -555,6 +549,9 @@ function switchTheme() {
 
   setTimeout(() => {
     generateTable();
+    // Сброс глобальной позиции — новая таблица, начинаем с начала
+    state.maxLine = 0;
+    state.maxCol = 0;
     state.lastLine = 0;
     state.lastLineClicks = 0;
     state.frozen = false;
@@ -576,10 +573,14 @@ function finishTest() {
     chars: state.currentHalf.charsPerMin.slice()
   });
 
-  const p1 = state.totalTargetsLight > 0
+  // Считаем процент отдельно по каждой теме и берём среднее.
+  // Ограничиваем каждый процент сверху на 100 на случай аномалий.
+  let p1 = state.totalTargetsLight > 0
     ? state.correctLight / state.totalTargetsLight * 100 : 0;
-  const p2 = state.totalTargetsDark > 0
+  let p2 = state.totalTargetsDark > 0
     ? state.correctDark / state.totalTargetsDark * 100 : 0;
+  p1 = Math.min(p1, 100);
+  p2 = Math.min(p2, 100);
   const avg = Math.round((p1 + p2) / 2);
   document.getElementById('percent').textContent = (isFinite(avg) ? avg : 0) + '%';
 
@@ -627,7 +628,6 @@ document.getElementById('startBtn').addEventListener('click', () => {
     return;
   }
 
-  // Проверка ника: минимум одна цифра
   if (!/\d/.test(nick)) {
     alert('Ник должен содержать хотя бы одну цифру. Например: anna_7, user42, k1r.');
     document.getElementById('nick').focus();
@@ -642,6 +642,31 @@ document.getElementById('startBtn').addEventListener('click', () => {
   state.glasses = glasses;
   state.eyeDisease = eyeDisease;
   state.eyeBreaks = eyeBreaks;
+
+  // Сброс счётчиков перед стартом
+  state.correct = 0;
+  state.errors = 0;
+  state.clicks = 0;
+  state.correctLight = 0;
+  state.correctDark = 0;
+  state.totalTargetsLight = 0;
+  state.totalTargetsDark = 0;
+  state.totalTargets = 0;
+  state.maxLine = 0;
+  state.maxCol = 0;
+  state.lastLine = 0;
+  state.lastLineClicks = 0;
+  state.theme = 'light';
+  document.body.classList.remove('dark');
+  state.results = [];
+  state.currentHalf = {
+    theme: 'light',
+    linesPerMin: [0, 0, 0, 0, 0],
+    errorsPerMin: [0, 0, 0, 0, 0],
+    charsPerMin: [0, 0, 0, 0, 0],
+    prevErrors: 0,
+    prevLineValue: 0
+  };
 
   document.getElementById('screen-intro').classList.remove('active');
   document.getElementById('screen-test').classList.add('active');
